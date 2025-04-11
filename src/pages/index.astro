@@ -1,0 +1,642 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Sample request/response objects for proper JSON formatting
+const sampleCashInRequest = {
+  nome: "John Doe",
+  cpf: "12345678900",
+  valor: "100.00",
+  descricao: "Payment description",
+  postback: "https://your-domain.com/webhook",
+  split: {
+    target: "recipient_id",
+    percentage: 50
+  }
+};
+
+const sampleCashOutRequest = {
+  nome: "John Doe",
+  cpf: "12345678900",
+  valor: "100.00",
+  descricao: "Payment description",
+  postback: "https://your-domain.com/webhook"
+};
+
+const sampleResponse = {
+  statusCode: 200,
+  id: "e123...",
+  pix: "00020126...",
+  value: 100.00,
+  status: "PENDING"
+};
+
+const sampleWebhook = {
+  type: "transaction",
+  data: {
+    id: "transaction-id",
+    status: "paid",
+    amount: 100.00
+  }
+};
+
+const content = {
+  en: {
+    title: "Payment Gateway API Documentation",
+    subtitle: "Complete documentation for payment integration",
+    intro: "Our payment gateway provides a robust solution for processing payments through PIX. This documentation will guide you through the integration process.",
+    auth: "Authentication",
+    authDesc: "All API requests require an API key sent in the header",
+    endpoints: "Endpoints",
+    navigation: "Navigation",
+    overview: "Overview",
+    gettingStarted: "Getting Started",
+    apiReference: "API Reference",
+    cashIn: "Cash In (PIX)",
+    cashOut: "Cash Out (PIX)",
+    webhook: "Webhook",
+    requestHeaders: "Request Headers",
+    requestBody: "Request Body",
+    response: "Response",
+    introduction: "Introduction",
+    transactionUpdates: "Receives transaction status updates",
+    splitDesc: "Optional split payment configuration (Cash In only)",
+    splitNote: "Note: Split functionality is only available for Cash In operations",
+    copy: "Copy",
+    copied: "Copied!",
+    apiDocs: "API Docs",
+    requestExample: "Request Example",
+    responseExample: "Response Example",
+    webhookExample: "Webhook Example",
+    json: "JSON",
+    apiKey: "API Key",
+    apiKeyExample: "your-api-key-here"
+  },
+  pt: {
+    title: "Documentação da API de Gateway de Pagamento",
+    subtitle: "Documentação completa para integração de pagamentos",
+    intro: "Nosso gateway de pagamento fornece uma solução robusta para processamento de pagamentos via PIX. Esta documentação irá guiá-lo através do processo de integração.",
+    auth: "Autenticação",
+    authDesc: "Todas as requisições da API requerem uma chave API no cabeçalho",
+    endpoints: "Endpoints",
+    navigation: "Navegação",
+    overview: "Visão Geral",
+    gettingStarted: "Começando",
+    apiReference: "Referência da API",
+    cashIn: "Entrada (PIX)",
+    cashOut: "Saída (PIX)",
+    webhook: "Webhook",
+    requestHeaders: "Cabeçalhos da Requisição",
+    requestBody: "Corpo da Requisição",
+    response: "Resposta",
+    introduction: "Introdução",
+    transactionUpdates: "Recebe atualizações de status da transação",
+    splitDesc: "Configuração opcional de divisão de pagamento (apenas para Entrada)",
+    splitNote: "Nota: A funcionalidade de divisão está disponível apenas para operações de Entrada",
+    copy: "Copiar",
+    copied: "Copiado!",
+    apiDocs: "Docs da API",
+    requestExample: "Exemplo de Requisição",
+    responseExample: "Exemplo de Resposta",
+    webhookExample: "Exemplo de Webhook",
+    json: "JSON",
+    apiKey: "Chave API",
+    apiKeyExample: "sua-chave-api-aqui"
+  }
+};
+
+// Get current language from URL or default to 'en'
+const lang = Astro.url.searchParams.get('lang') || 'en';
+const t = content[lang] || content.en;
+---
+
+<Layout title={t.title}>
+  <div class="documentation-container">
+    <nav class="sidebar">
+      <div class="sidebar-content">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>{t.apiDocs}</span>
+        </div>
+        <div class="nav-section">
+          <h3>{t.overview}</h3>
+          <ul>
+            <li><a href="#introduction">{t.introduction}</a></li>
+            <li><a href="#authentication">{t.auth}</a></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h3>{t.apiReference}</h3>
+          <ul>
+            <li><a href="#cash-in">{t.cashIn}</a></li>
+            <li><a href="#cash-out">{t.cashOut}</a></li>
+            <li><a href="#webhook">{t.webhook}</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <div class="controls">
+        <div class="language-switch">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="pt">PT</button>
+        </div>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+
+      <header class="header">
+        <h1>{t.title}</h1>
+        <p class="subtitle">{t.subtitle}</p>
+      </header>
+
+      <div class="content">
+        <section id="introduction" class="section">
+          <h2>{t.introduction}</h2>
+          <p>{t.intro}</p>
+          <p><strong>{t.splitNote}</strong></p>
+        </section>
+
+        <section id="authentication" class="section">
+          <h2>{t.auth}</h2>
+          <p>{t.authDesc}</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>{t.requestHeaders}</span>
+              <button class="copy-btn" data-copy-text="Apikey: your-api-key-here">{t.copy}</button>
+            </div>
+            <pre><code>Apikey: {t.apiKeyExample}</code></pre>
+          </div>
+        </section>
+
+        <section id="endpoints" class="section">
+          <h2>{t.endpoints}</h2>
+          
+          <div id="cash-in" class="endpoint">
+            <div class="endpoint-header">
+              <h3>{t.cashIn}</h3>
+              <span class="method">POST</span>
+              <span class="path">/cashin</span>
+            </div>
+            <div class="endpoint-content">
+              <h4>{t.requestBody}</h4>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>{t.json}</span>
+                  <button class="copy-btn">{t.copy}</button>
+                </div>
+                <pre><code>{JSON.stringify(sampleCashInRequest, null, 2)}</code></pre>
+              </div>
+              <p>{t.splitDesc}</p>
+              <h4>{t.response}</h4>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>{t.json}</span>
+                  <button class="copy-btn">{t.copy}</button>
+                </div>
+                <pre><code>{JSON.stringify(sampleResponse, null, 2)}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div id="cash-out" class="endpoint">
+            <div class="endpoint-header">
+              <h3>{t.cashOut}</h3>
+              <span class="method">POST</span>
+              <span class="path">/cashout</span>
+            </div>
+            <div class="endpoint-content">
+              <h4>{t.requestBody}</h4>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>{t.json}</span>
+                  <button class="copy-btn">{t.copy}</button>
+                </div>
+                <pre><code>{JSON.stringify(sampleCashOutRequest, null, 2)}</code></pre>
+              </div>
+              <h4>{t.response}</h4>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>{t.json}</span>
+                  <button class="copy-btn">{t.copy}</button>
+                </div>
+                <pre><code>{JSON.stringify(sampleResponse, null, 2)}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div id="webhook" class="endpoint">
+            <div class="endpoint-header">
+              <h3>{t.webhook}</h3>
+              <span class="method">POST</span>
+              <span class="path">/webhook</span>
+            </div>
+            <div class="endpoint-content">
+              <p>{t.transactionUpdates}</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span>{t.json}</span>
+                  <button class="copy-btn">{t.copy}</button>
+                </div>
+                <pre><code>{JSON.stringify(sampleWebhook, null, 2)}</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --primary-color: #4c51bf;
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --code-bg: #2d3748;
+    --code-text: #e2e8f0;
+    --sidebar-bg: #f8fafc;
+    --border-color: #e2e8f0;
+    --header-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #1a202c;
+    --text-color: #f7fafc;
+    --code-bg: #2d3748;
+    --code-text: #e2e8f0;
+    --sidebar-bg: #2d3748;
+    --border-color: #4a5568;
+    --header-gradient: linear-gradient(135deg, #434190 0%, #553c9a 100%);
+  }
+
+  .documentation-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  .sidebar {
+    width: 280px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-content {
+    padding: 1.5rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .nav-section {
+    margin-bottom: 2rem;
+  }
+
+  .nav-section h3 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-bottom: 0.75rem;
+  }
+
+  .nav-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .nav-section li {
+    margin-bottom: 0.5rem;
+  }
+
+  .nav-section a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .nav-section a:hover {
+    opacity: 1;
+  }
+
+  .main-content {
+    flex: 1;
+    margin-left: 280px;
+    padding: 2rem;
+    max-width: 1200px;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .language-switch {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .lang-btn,
+  .theme-toggle {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .lang-btn:hover,
+  .theme-toggle:hover {
+    background: var(--border-color);
+  }
+
+  .lang-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .sun-icon,
+  .moon-icon {
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-color);
+  }
+
+  [data-theme="dark"] .sun-icon,
+  [data-theme="light"] .moon-icon {
+    display: none;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 4rem;
+    padding: 3rem;
+    background: var(--header-gradient);
+    border-radius: 1rem;
+    color: white;
+  }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+  }
+
+  .section {
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .endpoint {
+    margin-bottom: 3rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    scroll-margin-top: 2rem;
+  }
+
+  .endpoint-header {
+    padding: 1.5rem;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .endpoint-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .method {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-family: monospace;
+    font-size: 0.875rem;
+  }
+
+  .path {
+    font-family: monospace;
+    color: var(--text-color);
+    opacity: 0.8;
+  }
+
+  .endpoint-content {
+    padding: 1.5rem;
+  }
+
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .code-header span {
+    color: var(--code-text);
+    font-size: 0.875rem;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--code-text);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .code-block pre {
+    margin: 0;
+    padding: 1.5rem;
+  }
+
+  .code-block code {
+    color: var(--code-text);
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1024px) {
+    .sidebar {
+      display: none;
+    }
+
+    .main-content {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .endpoint-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+</style>
+
+<script>
+  // Theme toggling
+  function initTheme() {
+    const themeToggle = document.querySelector('.theme-toggle');
+    const root = document.documentElement;
+    
+    // Set initial theme from localStorage or default to 'light'
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    root.setAttribute('data-theme', savedTheme);
+
+    themeToggle?.addEventListener('click', () => {
+      const currentTheme = root.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      root.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  }
+
+  // Language switching
+  function initLanguage() {
+    const buttons = document.querySelectorAll('.lang-btn');
+    const currentLang = new URLSearchParams(window.location.search).get('lang') || 'en';
+
+    // Set initial active state
+    buttons.forEach(btn => {
+      if (btn.getAttribute('data-lang') === currentLang) {
+        btn.classList.add('active');
+      }
+    });
+
+    // Add click handlers to language buttons
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newLang = btn.getAttribute('data-lang');
+        window.location.href = `${window.location.pathname}?lang=${newLang}`;
+      });
+    });
+  }
+
+  // Copy functionality
+  function initCopyButtons() {
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const codeBlock = btn.closest('.code-block').querySelector('code');
+        navigator.clipboard.writeText(codeBlock.textContent);
+        
+        const originalText = btn.textContent;
+        const translations = {
+          'Copy': 'Copied!',
+          'Copiar': 'Copiado!'
+        };
+        btn.textContent = translations[originalText] || 'Copied!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 2000);
+      });
+    });
+  }
+
+  // Smooth scroll
+  function initSmoothScroll() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  }
+
+  // Initialize all functionality
+  function init() {
+    initTheme();
+    initLanguage();
+    initCopyButtons();
+    initSmoothScroll();
+  }
+
+  // Initialize when the page loads
+  document.addEventListener('DOMContentLoaded', init);
+
+  // Also initialize when Astro's view transitions complete
+  document.addEventListener('astro:page-load', init);
+
+  // Initialize immediately in case we're not using view transitions
+  init();
+</script>
